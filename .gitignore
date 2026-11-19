@@ -1,0 +1,25 @@
+# --- NDA / customer data: never commit ---
+data/*
+*.pt
+*.onnx
+*.engine
+runs/
+replay_frames/
+
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.db
+
+# OS / editor
+.DS_Store
+*:Zone.Identifier
+.vscode/
+.idea/
+!data/README.md

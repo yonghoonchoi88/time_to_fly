@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-d2a}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-d2a}
+      POSTGRES_DB: ${POSTGRES_DB:-d2a}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-d2a} -d ${POSTGRES_DB:-d2a}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-d2a}:${POSTGRES_PASSWORD:-d2a}@db:5432/${POSTGRES_DB:-d2a}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
