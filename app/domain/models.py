@@ -85,6 +85,8 @@ class Inspection(Base):
     lot_id: Mapped[int] = mapped_column(ForeignKey("lot.id"), index=True)
     model_version_id: Mapped[int] = mapped_column(ForeignKey("model_version.id"))
     image_uri: Mapped[str] = mapped_column(String(512))
+    image_width: Mapped[int] = mapped_column(Integer)
+    image_height: Mapped[int] = mapped_column(Integer)
     source: Mapped[InspectionSource] = mapped_column(_enum(InspectionSource))
     captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     verdict: Mapped[Verdict] = mapped_column(_enum(Verdict))
