@@ -1,0 +1,166 @@
+/* Review queue screen. Plain CSS, no framework. */
+
+:root {
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --border: #d9dce1;
+  --text: #1f2328;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --low-conf-bg: #fef3c7;
+  --low-conf-fg: #92400e;
+  --audit-bg: #dbeafe;
+  --audit-fg: #1e40af;
+  --confirm: #dc2626;
+  --reject: #4b5563;
+  --missed: #7c3aed;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Top summary bar --- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { font-size: 18px; margin: 0; }
+.stats { display: flex; gap: 16px; color: var(--muted); }
+.stats strong { color: var(--text); font-size: 18px; margin-left: 4px; }
+.mode-badge {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  color: var(--muted);
+}
+.mode-badge:empty { display: none; }
+
+/* --- Three-column layout: list | image | decision --- */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  /* minmax(0, ...) lets the viewer shrink below the canvas's current size;
+     plain 1fr/auto would be held open by the canvas and never shrink. */
+  grid-template-columns: 260px minmax(0, 1fr) 240px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 0;
+}
+.panel h2 { font-size: 14px; margin: 0 0 8px; color: var(--muted); }
+
+/* --- Task list --- */
+.list-panel { display: flex; flex-direction: column; }
+.task-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; }
+.task-item {
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  align-items: center;
+}
+.task-item:hover { background: #f9fafb; }
+.task-item.selected { border-color: var(--accent); background: #eff6ff; }
+.task-item .lot { font-weight: 600; }
+.task-item .time { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+
+.badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.badge.low_confidence { background: var(--low-conf-bg); color: var(--low-conf-fg); }
+.badge.audit_sample { background: var(--audit-bg); color: var(--audit-fg); }
+
+.empty { color: var(--muted); font-size: 14px; }
+
+/* --- Image viewer --- */
+.viewer-panel { display: flex; flex-direction: column; min-width: 0; }
+.viewer-meta { font-size: 13px; color: var(--muted); margin-bottom: 8px; min-height: 18px; }
+.canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  border-radius: 6px;
+  overflow: hidden;
+}
+#viewer { display: block; }
+#viewer.drawing { cursor: crosshair; touch-action: none; }
+.draw-hint { margin: 8px 0 0; font-size: 13px; color: var(--missed); }
+/* Reserve the hint's space so toggling it never resizes the canvas mid-drag. */
+.draw-hint[hidden] { display: block; visibility: hidden; }
+
+/* --- Decision panel --- */
+.decision-panel { display: flex; flex-direction: column; gap: 10px; }
+.decision-panel label { font-size: 13px; color: var(--muted); }
+.decision-panel input {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.confirm { background: var(--confirm); }
+.btn.reject { background: var(--reject); }
+.btn.missed { background: var(--missed); }
+.btn.missed.active { outline: 3px solid #c4b5fd; outline-offset: 2px; }
+
+kbd {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  opacity: 0.8;
+}
+.shortcut-help { font-size: 12px; color: var(--muted); margin: 0; }
+
+.notice {
+  font-size: 13px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+}
