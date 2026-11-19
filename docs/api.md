@@ -89,3 +89,55 @@
 - 결정 대상은 해당 검사의 후보 결함 **전체**입니다 (v0.1 단순화).
 - `bbox`는 `[x, y, w, h]`, `x, y ≥ 0`, `w, h > 0`. `defect_type`·`bbox`는 `add_missed`에서만 허용됩니다.
 - 모든 상태 변화는 Event로 남습니다.
+
+## POST /actions — 조치 열기
+
+```json
+{ "lot_code": "S01", "action_type": "hold_lot", "owner": "lead", "defect_id": 30, "note": "이물 확인, 출하 보류" }
+```
+
+- `action_type`: `hold_lot` | `recheck` | `stop_line` | `release_lot`
+- `defect_id`(선택): 이 조치를 부른 결함. 같은 Lot의 **confirmed** 결함만 가능 (아니면 `422`)
+- `201 Created`: ActionOut · `404`: 없는 Lot · `409`: 지금 Lot 상태로는 불가 · `422`: 필드 오류
+
+| 조치 | Lot 상태 변화 |
+|---|---|
+| `hold_lot` | 열리는 즉시 `open → on_hold` (이미 보류 중이면 `409`) |
+| `release_lot` | 보류 중인 Lot만 열 수 있음. 조치가 `done`이 될 때 `on_hold → released` |
+| `recheck`, `stop_line` | 변화 없음 |
+
+- 조치를 `cancelled`해도 Lot 상태는 되돌아가지 않습니다. 보류 해제는 `release_lot`으로만 합니다.
+
+## POST /actions/{id}/status — 조치 진행 상태 변경
+
+```json
+{ "status": "in_progress", "actor": "lead", "note": "재검 시작" }
+```
+
+- `open → in_progress → done`, `open | in_progress → cancelled`. 그 외는 `409`
+- `done` / `cancelled`가 되면 `closed_at`이 기록됩니다.
+
+## GET /actions?status=open&lot_code=S01&limit=100 — 조치 목록
+
+오래된 순서. `status`, `lot_code`는 선택.
+
+### ActionOut
+
+```json
+{
+  "id": 7, "lot_code": "S01", "lot_status": "on_hold",
+  "action_type": "hold_lot", "status": "done", "owner": "lead",
+  "defect_id": 30, "note": "이물 확인, 출하 보류",
+  "opened_at": "2026-11-20T09:02:10Z", "closed_at": "2026-11-20T09:15:40Z",
+  "detection_to_open_s": 130.0,
+  "detection_to_done_s": 940.0
+}
+```
+
+- `detection_to_open_s`: 결함이 찍힌 시각(`captured_at`) → 조치가 열린 시각 (초)
+- `detection_to_done_s`: 결함이 찍힌 시각 → 조치 완료 시각 (초). **"감지부터 조치까지 걸린 시간" 지표**
+- 결함과 연결되지 않은 조치이거나 아직 완료 전이면 `null`
+
+## 시간 형식
+
+모든 시각은 UTC, ISO 8601, `Z`로 끝납니다 (예: `2026-11-20T09:00:00Z`). 화면에서 한국 시간으로 바꿔서 보여주세요.

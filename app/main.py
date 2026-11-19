@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.api import inspections, review
+from app.api import actions, inspections, review
 from app.db import Base, engine, get_session
 from app.domain import models  # noqa: F401  (registers tables on Base.metadata)
 
@@ -21,6 +21,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Defect-to-Action", version="0.1.0", lifespan=lifespan)
 app.include_router(inspections.router)
 app.include_router(review.router)
+app.include_router(actions.router)
 
 
 @app.get("/health")

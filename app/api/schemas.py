@@ -4,8 +4,17 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.domain.enums import DefectStatus, ReviewDecision, ReviewReason, ReviewStatus, Verdict
-from app.domain.models import Defect, ReviewTask
+from app.domain.enums import (
+    ActionStatus,
+    ActionType,
+    DefectStatus,
+    LotStatus,
+    ReviewDecision,
+    ReviewReason,
+    ReviewStatus,
+    Verdict,
+)
+from app.domain.models import Action, Defect, ReviewTask
 
 
 class DefectOut(BaseModel):
@@ -92,3 +101,58 @@ class DecisionIn(BaseModel):
         elif has_missed:
             raise ValueError("defect_type and bbox are only allowed with add_missed")
         return self
+
+
+class ActionIn(BaseModel):
+    lot_code: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
+    action_type: ActionType
+    owner: str = Field(min_length=1, max_length=64)
+    defect_id: int | None = None
+    note: str = Field(default="", max_length=2000)
+
+
+class ActionStatusIn(BaseModel):
+    status: ActionStatus
+    actor: str = Field(min_length=1, max_length=64)
+    note: str = Field(default="", max_length=2000)
+
+
+class ActionOut(BaseModel):
+    id: int
+    lot_code: str
+    lot_status: LotStatus
+    action_type: ActionType
+    status: ActionStatus
+    owner: str
+    defect_id: int | None
+    note: str
+    opened_at: datetime
+    closed_at: datetime | None
+    # Seconds from the defect's capture to this action being opened / completed.
+    # Null when the action is not tied to a defect, or not completed yet.
+    detection_to_open_s: float | None
+    detection_to_done_s: float | None
+
+    @classmethod
+    def of(cls, a: Action) -> "ActionOut":
+        captured = a.defect.inspection.captured_at if a.defect is not None else None
+        to_open = (a.opened_at - captured).total_seconds() if captured else None
+        to_done = (
+            (a.closed_at - captured).total_seconds()
+            if captured and a.closed_at and a.status is ActionStatus.DONE
+            else None
+        )
+        return cls(
+            id=a.id,
+            lot_code=a.lot.code,
+            lot_status=a.lot.status,
+            action_type=a.action_type,
+            status=a.status,
+            owner=a.owner,
+            defect_id=a.defect_id,
+            note=a.note,
+            opened_at=a.opened_at,
+            closed_at=a.closed_at,
+            detection_to_open_s=round(to_open, 3) if to_open is not None else None,
+            detection_to_done_s=round(to_done, 3) if to_done is not None else None,
+        )
