@@ -1,0 +1,19 @@
+﻿date,member,github,role,category,issue,pr,work,result,evidence,next_step
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,setup,,,"저장소 time_to_fly 생성 · v0.1 뼈대(온톨로지, 판정 규칙, 상태 전이, 가짜 엔진)",main 첫 커밋 · CI(pytest 3.10/3.12) 통과,tests 35 passed,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,setup,,,main 보호 규칙(PR 필수 · 승인 1 · Code Owner · CI 필수 · force push 금지) + CODEOWNERS,직접 push 불가 · 팀원 PR은 승인 후 merge,Ruleset main-protection,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,planning,#4~#9,,팀원 2명 합류 · 작업 지시서 2부 + 팀 킥오프 가이드 전달 · 이슈 6건 등록,역할 · API 계약 · 1주차 일정 공유,PDF 3부 · GitHub Issues,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,feature,,#1,"업로드 처리용 패키지 추가 (python-multipart, opencv-python-headless)",merged,CI 통과,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,docs,,#2,API 계약 v0.1 (docs/api.md),merged,3명 동시 개발 기준 문서,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,feature,,#3,POST /inspections · GET /inspections/{id}/image,merged,"tests 49 passed · curl 5장 업로드(OK 4, NG 1) · 이미지 조회 200",
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,feature,#4,#10,"검수 대기열 API (GET /review-tasks, POST /review-tasks/{id}/decision)",merged · #4 closed,tests 66 passed · 대기열 3건 · 반려 → rejected · 재결정 409,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,fix,,#11,모든 시각을 UTC(…Z)로 통일 (UTCDateTime),merged,tests 69 passed,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,feature,#7,#12,조치 API (Lot 보류 · 재검 · 라인 정지 · 해제) + 감지→조치 시간 지표,merged · #7 closed,tests 84 passed · 보류→해제 완료 시 Lot released,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,test,,#14,E2E smoke 스크립트 (tools/smoke.py: 검사 40건 → 검수 → 보류 · 해제),merged,Postgres(docker compose) ALL PASSED,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,fix,,#15,검사 이미지를 컨테이너 밖 data/images 에 저장,merged,compose down → up 후 이미지 조회 200,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,review,#5,#13,팀원 A PR 리뷰 · 승인 · merge,approved · merged,최신 main과 합쳐 93 passed · 실제 실행 4.00 fps 확인,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,review,#6,#16,팀원 B PR 리뷰 · 승인 · merge,approved · merged,화면 직접 띄워 확인 · 93 passed,이미지 로딩 실패 안내 · '승인' 라벨 검토 요청
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,data,#9,,김치 데이터 사용 허락 확인 (지원 영상 · 포트폴리오),#9 closed,원본 · 라벨 · 가중치는 Git 제외 원칙 유지,
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,data,,,로컬 데이터 정리: 검수 완료 900장 · 최종 모델 · 세션 분할표 → 기준값 조정용(val) 73장 / 시연용(bridge) 140장,data/ (Git 제외) · git status 깨끗,bridge = 검출 모델 단계에서 학습·튜닝·선택에 안 쓴 데이터,다음 주 김치 YOLO 엔진 연결
+2026-11-19,최용훈,yonghoonchoi88,PM / Integrator,verify,,,라인 재생기로 시연용 140장 dry-run,5.00 fps · 27.8초,summary: frames=140 actual_fps=5.00,
+2026-11-19,이성형,sunghyunglee,라인 재생기 · 엔진 어댑터,feature,#5,#13,라인 재생기 tools/line_replay.py (폴더 = Lot · 이름순 정렬 · 밀림 없는 속도 · dry-run),merged,tests 9개 추가 · 요약 stderr · N−1 FPS 계산,실제 전송(httpx) 2차 PR · #5 reopen 필요
+2026-11-19,심준형,simpson92,검수 화면 · 지표,feature,#6,#16,검수 대기열 화면 app/web/review.html (mock 모드 · 단축키 A/R/M · 놓친 결함 그리기),merged · #6 open (Refs),textContent 렌더링 · 중복 전송 방지 · 합성 이미지,실제 API 연결 (/ui 같은 주소 서빙 후)
