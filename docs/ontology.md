@@ -11,7 +11,7 @@
 | `ProductionLine` | 생산 라인 | name, site |
 | `Lot` | 생산 묶음 (김치: 촬영 세션 1개 = Lot 1개) | code, product_type, status |
 | `ModelVersion` | 검사 엔진 + 판정 기준값 | name, engine, weights_sha256, auto_ng_conf, review_conf |
-| `Inspection` | 이미지 1장에 대한 검사 1회 | image_uri, captured_at, source(live/replay), verdict, latency_ms, is_audit_sample |
+| `Inspection` | 이미지 1장에 대한 검사 1회 | image_uri, image_width/height, captured_at, source(live/replay), verdict, latency_ms, is_audit_sample |
 | `Defect` | 결함 후보 1개 | defect_type, confidence, bbox, origin(model/human), status |
 | `ReviewTask` | 사람이 확인해야 할 일 | reason(low_confidence/audit_sample), status, reviewer, decided_at |
 | `Action` | 현장 조치 | action_type, status, owner, opened_at, closed_at, note |
