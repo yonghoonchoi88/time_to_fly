@@ -10,11 +10,11 @@ import cv2
 import numpy as np
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.domain.enums import DefectStatus, InspectionSource, Verdict
+from app.api.schemas import DefectOut, InspectionOut
+from app.domain.enums import InspectionSource
 from app.domain.models import Inspection
 from app.engines.base import InspectionEngine
 from app.engines.registry import get_engine
@@ -43,23 +43,6 @@ def get_rng() -> random.Random:
 def get_engine_resolver() -> Callable[[str], InspectionEngine]:
     """Dependency returning a name -> engine lookup; overridden in tests."""
     return get_engine
-
-
-class DefectOut(BaseModel):
-    id: int
-    defect_type: str
-    confidence: float | None
-    bbox: list[float] | None
-    status: DefectStatus
-
-
-class InspectionOut(BaseModel):
-    inspection_id: int
-    lot_code: str
-    verdict: Verdict
-    latency_ms: float
-    review_task_id: int | None
-    defects: list[DefectOut]
 
 
 @router.post("/inspections", status_code=status.HTTP_201_CREATED, response_model=InspectionOut)
@@ -115,10 +98,7 @@ def create_inspection(
         verdict=inspection.verdict,
         latency_ms=round(inspection.latency_ms, 3),
         review_task_id=task.id if task else None,
-        defects=[
-            DefectOut(id=d.id, defect_type=d.defect_type, confidence=d.confidence, bbox=d.bbox, status=d.status)
-            for d in inspection.defects
-        ],
+        defects=[DefectOut.of(d) for d in inspection.defects],
     )
 
 
