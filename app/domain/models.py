@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -24,6 +24,7 @@ from app.domain.enums import (
     ReviewStatus,
     Verdict,
 )
+from app.domain.types import UTCDateTime
 
 
 def utcnow() -> datetime:
@@ -53,7 +54,7 @@ class Lot(Base):
     code: Mapped[str] = mapped_column(String(64), unique=True)
     product_type: Mapped[str] = mapped_column(String(64))
     status: Mapped[LotStatus] = mapped_column(_enum(LotStatus), default=LotStatus.OPEN)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
     line: Mapped[ProductionLine] = relationship(back_populates="lots")
     inspections: Mapped[list[Inspection]] = relationship(back_populates="lot")
@@ -75,7 +76,7 @@ class ModelVersion(Base):
     auto_ng_conf: Mapped[float] = mapped_column(Float)
     review_conf: Mapped[float] = mapped_column(Float)
     audit_rate: Mapped[float] = mapped_column(Float, default=0.05)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 
 class Inspection(Base):
@@ -88,7 +89,7 @@ class Inspection(Base):
     image_width: Mapped[int] = mapped_column(Integer)
     image_height: Mapped[int] = mapped_column(Integer)
     source: Mapped[InspectionSource] = mapped_column(_enum(InspectionSource))
-    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    captured_at: Mapped[datetime] = mapped_column(UTCDateTime())
     verdict: Mapped[Verdict] = mapped_column(_enum(Verdict))
     latency_ms: Mapped[float] = mapped_column(Float)
     is_audit_sample: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -123,8 +124,8 @@ class ReviewTask(Base):
     status: Mapped[ReviewStatus] = mapped_column(_enum(ReviewStatus), default=ReviewStatus.PENDING)
     decision: Mapped[ReviewDecision | None] = mapped_column(_enum(ReviewDecision), nullable=True)
     reviewer: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    decided_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
     inspection: Mapped[Inspection] = relationship(back_populates="review_tasks")
 
@@ -141,8 +142,8 @@ class Action(Base):
     status: Mapped[ActionStatus] = mapped_column(_enum(ActionStatus), default=ActionStatus.OPEN)
     owner: Mapped[str] = mapped_column(String(64))
     note: Mapped[str] = mapped_column(Text, default="")
-    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    opened_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
     lot: Mapped[Lot] = relationship(back_populates="actions")
     defect: Mapped[Defect | None] = relationship()
@@ -158,5 +159,5 @@ class Event(Base):
     object_id: Mapped[int] = mapped_column(Integer, index=True)
     event: Mapped[str] = mapped_column(String(64))
     actor: Mapped[str] = mapped_column(String(64))
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
