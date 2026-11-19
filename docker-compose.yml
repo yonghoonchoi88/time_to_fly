@@ -17,6 +17,10 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-d2a}:${POSTGRES_PASSWORD:-d2a}@db:5432/${POSTGRES_DB:-d2a}
+      IMAGE_DIR: /srv/data/images
+    volumes:
+      # Inspected frames live on the host (git-ignored data/) so they survive `docker compose down`.
+      - ./data/images:/srv/data/images
     ports:
       - "8000:8000"
     depends_on:
