@@ -11,7 +11,7 @@
 | `ProductionLine` | 생산 라인 | name, site |
 | `Lot` | 생산 묶음 (김치: 촬영 세션 1개 = Lot 1개) | code, product_type, status |
 | `ModelVersion` | 검사 엔진 + 판정 기준값 | name, engine, weights_sha256, auto_ng_conf, review_conf |
-| `Inspection` | 이미지 1장에 대한 검사 1회 | image_uri, captured_at, source(live/replay), verdict, latency_ms, is_audit_sample |
+| `Inspection` | 이미지 1장에 대한 검사 1회 | image_uri, image_width/height, captured_at, source(live/replay), verdict, latency_ms, is_audit_sample |
 | `Defect` | 결함 후보 1개 | defect_type, confidence, bbox, origin(model/human), status |
 | `ReviewTask` | 사람이 확인해야 할 일 | reason(low_confidence/audit_sample), status, reviewer, decided_at |
 | `Action` | 현장 조치 | action_type, status, owner, opened_at, closed_at, note |
@@ -61,9 +61,10 @@ ProductionLine 1 ──< Lot 1 ──< Inspection 1 ──< Defect
 - `open → in_progress → done`, `open/in_progress → cancelled`
 
 **Lot.status**
-- `open → on_hold` : 격리 조치(`hold_lot`) 생성 시
-- `on_hold → released` : 재검 완료 후 해제
-- `on_hold → scrapped` : 폐기
+- `open → on_hold` : 격리 조치(`hold_lot`)가 **열리는 즉시** (격리는 서류를 기다리지 않는다)
+- `on_hold → released` : 해제 조치(`release_lot`)가 **완료(done)될 때** (실제 재검이 끝난 뒤)
+- `on_hold → scrapped` : 폐기 (v0.1에서는 API 미제공)
+- 조치를 취소해도 Lot 상태는 되돌리지 않는다. 보류 해제는 `release_lot`으로만.
 
 `app/domain/transitions.py`가 이 표의 코드 버전이다. 표에 없는 전이는 `InvalidTransition`으로 거부한다.
 
@@ -74,7 +75,7 @@ ProductionLine 1 ──< Lot 1 ──< Inspection 1 ──< Defect
 | 처리 지연 | `Inspection.latency_ms` (엔진 추론 + 판정) |
 | 처리량 | 분당 Inspection 수 (재생 모드에서는 카메라 FPS가 아니라 처리량으로 표기) |
 | 검수 대기 시간 | ReviewTask 생성 → 결정 |
-| **감지 → 조치 완료 시간** | Inspection.captured_at → 연결된 Action.closed_at |
+| **감지 → 조치 완료 시간** | Inspection.captured_at → 연결된 Action.closed_at (API: `detection_to_done_s`) |
 | 오탐 비율 | rejected / (confirmed + rejected) |
 | 감사로 되찾은 놓침 | audit ReviewTask 중 `add_missed` 건수 |
 

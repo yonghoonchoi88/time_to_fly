@@ -44,6 +44,8 @@ def record_inspection(
         lot=lot,
         model_version=model_version,
         image_uri=image_uri,
+        image_width=int(image.shape[1]),
+        image_height=int(image.shape[0]),
         source=source,
         captured_at=captured_at,
         verdict=decision.verdict,
