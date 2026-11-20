@@ -12,6 +12,7 @@
   --audit-bg: #dbeafe;
   --audit-fg: #1e40af;
   --confirm: #dc2626;
+  --ok-verdict: #16a34a;
   --reject: #4b5563;
   --missed: #7c3aed;
 }
@@ -114,6 +115,15 @@ body {
   border-radius: 6px;
   overflow: hidden;
 }
+
+.image-error {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #fca5a5;
+}
 #viewer { display: block; }
 #viewer.drawing { cursor: crosshair; touch-action: none; }
 .draw-hint { margin: 8px 0 0; font-size: 13px; color: var(--missed); }
@@ -143,6 +153,7 @@ body {
 }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn.confirm { background: var(--confirm); }
+.btn.confirm.ok-verdict { background: var(--ok-verdict); }
 .btn.reject { background: var(--reject); }
 .btn.missed { background: var(--missed); }
 .btn.missed.active { outline: 3px solid #c4b5fd; outline-offset: 2px; }

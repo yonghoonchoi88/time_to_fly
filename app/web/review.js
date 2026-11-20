@@ -25,6 +25,7 @@ const state = {
   tasks: [],          // pending review tasks, in queue order
   selectedIndex: -1,
   image: null,        // HTMLImageElement for the selected inspection
+  imageFailed: false, // the selected inspection's image could not be loaded
   scale: 1,           // screen px per source image px
   submitting: false,  // blocks double submits (e.g. a held-down key)
   drawMode: false,    // "add missed defect" mode
@@ -38,10 +39,14 @@ const els = {
   canvas: document.getElementById("viewer"),
   canvasWrap: document.querySelector(".canvas-wrap"),
   meta: document.getElementById("viewer-meta"),
+  imageError: document.getElementById("image-error"),
   statPending: document.getElementById("stat-pending"),
   statDoneToday: document.getElementById("stat-done-today"),
   modeBadge: document.getElementById("mode-badge"),
   drawHint: document.getElementById("draw-hint"),
+  confirmButton: document.getElementById("btn-confirm"),
+  confirmLabel: document.getElementById("label-confirm"),
+  rejectButton: document.getElementById("btn-reject"),
   missedButton: document.getElementById("btn-missed"),
   reviewer: document.getElementById("reviewer"),
   notice: document.getElementById("notice"),
@@ -201,10 +206,47 @@ function renderList() {
 
   const hasTasks = state.tasks.length > 0;
   els.empty.hidden = hasTasks;
-  els.buttons.forEach((btn) => { btn.disabled = !hasTasks; });
+  renderDecisionButtons();
 
   const selected = els.list.querySelector(".selected");
   if (selected) selected.scrollIntoView({ block: "nearest" });
+}
+
+/**
+ * "confirm" means different things depending on the task (docs/api.md):
+ * with candidates it confirms the defects; without candidates (audit sample)
+ * it records that the OK verdict was correct. The label follows that meaning.
+ */
+const CONFIRM_LABELS = {
+  defects: { text: "결함 확정", title: "후보 결함이 실제 결함임을 확정합니다" },
+  noCandidates: { text: "OK 판정 맞음", title: "결함이 없다는 OK 판정이 맞음을 기록합니다" },
+};
+
+function hasCandidates(task) {
+  return task.defects.length > 0;
+}
+
+/**
+ * Decisions need a visible image: a reviewer must not confirm or reject
+ * evidence they could not see.
+ */
+function renderDecisionButtons() {
+  const task = selectedTask();
+  const blocked = !task || state.imageFailed;
+  els.buttons.forEach((btn) => { btn.disabled = blocked; });
+  if (!task) return;
+
+  const label = hasCandidates(task) ? CONFIRM_LABELS.defects : CONFIRM_LABELS.noCandidates;
+  els.confirmLabel.textContent = label.text;
+  els.confirmButton.title = label.title;
+  // Red reads as "defect"; an OK-verdict confirmation gets its own color.
+  els.confirmButton.classList.toggle("ok-verdict", !hasCandidates(task));
+  // Nothing to reject when the engine proposed no candidates.
+  if (!hasCandidates(task)) els.rejectButton.disabled = true;
+}
+
+function renderImageError() {
+  els.imageError.hidden = !state.imageFailed;
 }
 
 function renderMeta(task) {
@@ -231,6 +273,9 @@ function drawViewer() {
   if (!task || !state.image) {
     els.canvas.width = 0;
     els.canvas.height = 0;
+    // Clear the CSS size too, or the empty canvas keeps its old footprint.
+    els.canvas.style.width = "";
+    els.canvas.style.height = "";
     return;
   }
 
@@ -289,6 +334,8 @@ async function selectTask(index) {
     exitDrawMode();
     state.selectedIndex = -1;
     state.image = null;
+    state.imageFailed = false;
+    renderImageError();
     renderList();
     renderMeta(null);
     drawViewer();
@@ -298,13 +345,25 @@ async function selectTask(index) {
   exitDrawMode(); // a half-drawn box never carries over to another task
   state.selectedIndex = Math.max(0, Math.min(index, state.tasks.length - 1));
   const task = selectedTask();
+  // Drop the previous image so its pixels are never drawn under this task's boxes.
+  state.image = null;
+  state.imageFailed = false;
+  renderImageError();
   renderList();
   renderMeta(task);
 
-  const image = await loadImage(imageUrlFor(task));
-  // Ignore a stale load if the reviewer moved on while it was in flight.
+  let image = null;
+  try {
+    image = await loadImage(imageUrlFor(task));
+  } catch (err) {
+    console.error(err);
+  }
+  // Ignore a stale result if the reviewer moved on while the load was in flight.
   if (selectedTask() !== task) return;
   state.image = image;
+  state.imageFailed = image === null;
+  renderImageError();
+  renderDecisionButtons();
   drawViewer();
 }
 
@@ -400,6 +459,15 @@ function removeTask(task) {
 async function decide(decision, extra = {}) {
   const task = selectedTask();
   if (!task || state.submitting) return;
+  if (!state.image) {
+    // Covers keyboard shortcuts too; the buttons are already disabled on failure.
+    if (state.imageFailed) showNotice("이미지가 없어 결정할 수 없습니다.");
+    return;
+  }
+  if (decision === "reject" && !hasCandidates(task)) {
+    showNotice("반려할 후보 결함이 없습니다.");
+    return;
+  }
 
   const reviewer = els.reviewer.value.trim();
   if (!reviewer) {
