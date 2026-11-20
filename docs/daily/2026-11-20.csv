@@ -6,3 +6,4 @@
 2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,data,,,"팀 공유용 데이터 폴더 정리(구글 드라이브): README · 분할표 · 학습 설정 · 분할 검증 리포트 · 매니페스트 16개 업로드, 사진 900장 · 가중치 업로드 진행 중",진행 중,분할 검증 리포트 전부 PASS (기존 산출물) · 가중치 sha256 기록,업로드 완료 후 공유 범위를 팀원 2명으로 제한
 2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,review,#6,#18,팀원 B PR 리뷰 · 승인 · merge,approved · merged,최신 main 93 passed,템플릿 이전은 #21 PR 2에서
 2026-11-20,심준형,simpson92,검수 화면 · 지표,fix,#6,#18,검수 화면 리뷰 반영: 이미지 로드 실패 안내 · 결정 버튼 비활성화 · 작업별 라벨(결함 확정 / OK 판정 맞음) · 감사 샘플 반려 비활성화,merged · #6 open (Refs),합성 이미지 스크린샷 · pytest 통과,Django 템플릿 이전 (#21)
+2026-11-20,심준형,simpson92,검수 화면 · 지표,feature,#21,,"Django + DRF 백엔드 뼈대(PR 1): 환경변수 설정 · SQLite/PostgreSQL 전환 · /api/health/ · User 모델 · 역할 그룹 3개 · 권한 클래스 · 관리자 · /api/auth/me/ · CI",PR 리뷰 대기,backend pytest 14 passed · 루트 pytest 93 passed · /api/health/ 200 · 관리자 그룹 3개 확인,"PR 2: JWT 로그인 · 검수 화면 템플릿 · Dockerfile"
