@@ -32,9 +32,11 @@ Camera / line replay ─▶ Engine ─▶ Verdict (OK·NG·REVIEW) ─▶ Persis
 
 ```bash
 cp .env.example .env
-docker compose up --build
-curl localhost:8000/health
+docker compose up --build -d
+curl localhost:8000/api/health/
 ```
+
+This starts Django (8000), a Celery worker, ai-server (8001), Redis and PostgreSQL. Checks and troubleshooting (Korean): [docs/runbook.md](docs/runbook.md)
 
 Tests:
 

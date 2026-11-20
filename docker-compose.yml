@@ -1,3 +1,21 @@
+# Full stack: Django (web) + Celery worker + ai-server (FastAPI inference) + Redis + PostgreSQL.
+# Values come from the root .env (see .env.example); every variable has a dev default.
+# Runbook: docs/runbook.md
+
+x-backend-env: &backend-env
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-dev-only-set-DJANGO_SECRET_KEY}
+  DEBUG: ${DEBUG:-1}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  DB_HOST: db
+  DB_PORT: "5432"
+  DB_NAME: ${DJANGO_DB_NAME:-d2a_django}
+  DB_USER: ${POSTGRES_USER:-d2a}
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-d2a}
+  REDIS_URL: redis://redis:6379/0
+  FASTAPI_BASE_URL: http://fastapi:8001
+  AI_SERVER_TIMEOUT_S: ${AI_SERVER_TIMEOUT_S:-30}
+  IMAGE_DIR: /srv/data/images
+
 services:
   db:
     image: postgres:16-alpine
@@ -12,8 +30,115 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      # The first start on an empty volume runs initdb, which outlasted 10 x 5 s on a slow
+      # disk. Failures inside start_period are not counted, so `up` waits instead of aborting.
+      start_period: 180s
 
+  # One-shot: create the Django database if it is missing. The postgres image's
+  # init scripts only run on an empty volume, and existing volumes already hold the
+  # legacy "d2a" database, so the check runs on every `up` instead.
+  db-init:
+    image: postgres:16-alpine
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-d2a}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-d2a}
+      PGDATABASE: ${POSTGRES_DB:-d2a}
+      DJANGO_DB_NAME: ${DJANGO_DB_NAME:-d2a_django}
+    command:
+      - sh
+      - -ec
+      - |
+        if psql -tAc "SELECT 1 FROM pg_database WHERE datname = '$$DJANGO_DB_NAME'" | grep -q 1; then
+          echo "database $$DJANGO_DB_NAME already exists"
+        else
+          createdb "$$DJANGO_DB_NAME"
+          echo "created database $$DJANGO_DB_NAME"
+        fi
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
+
+  # Inference only (ADR 0001). The service name matches FASTAPI_BASE_URL.
+  # ENGINE=yolo needs WITH_YOLO=1 at build time and weights under ./data/models.
+  fastapi:
+    build:
+      context: ./ai-server
+      args:
+        WITH_YOLO: ${WITH_YOLO:-0}
+    environment:
+      ENGINE: ${ENGINE:-mock}
+      MODEL_WEIGHTS: ${MODEL_WEIGHTS:-}
+      MODEL_NAME: ${MODEL_NAME:-kimchi-yolo}
+      MODEL_VERSION: ${MODEL_VERSION:-mock-0}
+      IMGSZ: ${IMGSZ:-1280}
+    volumes:
+      - ./data/models:/models:ro
+    ports:
+      - "8001:8001"
+    healthcheck:
+      # The slim image has no curl; urlopen raises on non-2xx, so a 5xx marks it unhealthy.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    build: ./backend
+    environment: *backend-env
+    command:
+      - sh
+      - -ec
+      - |
+        python manage.py migrate --noinput
+        exec gunicorn mysite.wsgi:application -b 0.0.0.0:8000
+    volumes:
+      - ./data/images:/srv/data/images
+    ports:
+      - "8000:8000"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # /api/health/ runs SELECT 1 and returns 503 when the database is unreachable.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  celery:
+    build: ./backend
+    environment: *backend-env
+    # One process: inference is CPU-bound and runs on the same machine as ai-server.
+    command: ["celery", "-A", "mysite", "worker", "--loglevel=info", "--concurrency=1"]
+    volumes:
+      - ./data/images:/srv/data/images
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      fastapi:
+        condition: service_healthy
+
+  # Legacy FastAPI service (root app/). Kept until the Django migration is finished;
+  # start it with `docker compose --profile legacy up`.
   api:
+    profiles: ["legacy"]
     build: .
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-d2a}:${POSTGRES_PASSWORD:-d2a}@db:5432/${POSTGRES_DB:-d2a}
@@ -22,7 +147,7 @@ services:
       # Inspected frames live on the host (git-ignored data/) so they survive `docker compose down`.
       - ./data/images:/srv/data/images
     ports:
-      - "8000:8000"
+      - "8080:8000"
     depends_on:
       db:
         condition: service_healthy
