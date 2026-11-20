@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.accounts",
     "apps.core",
+    "apps.ai_gateway",
 ]
 
 MIDDLEWARE = [
@@ -90,9 +91,31 @@ else:
         }
     }
 
-# Read now, used once the domain and the worker move over from FastAPI.
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+# AI inference server (ai-server/). Only the read timeout is configurable; the connect
+# timeout is fixed in apps.ai_gateway.services so a dead server fails fast.
 FASTAPI_BASE_URL = os.environ.get("FASTAPI_BASE_URL", "http://fastapi:8001")
+AI_SERVER_TIMEOUT_S = float(os.environ.get("AI_SERVER_TIMEOUT_S") or 30)
+
+# Celery (read by mysite/celery.py through the CELERY_ prefix).
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+# Acknowledge after the task finishes, so a task whose whole worker dies mid-inference
+# stays in Redis and is redelivered (after the broker visibility timeout, 1 h by default)
+# instead of being lost. Tasks must therefore be safe to run twice. A pool child killed on
+# its own (e.g. OOM) is still recorded as WorkerLostError, not requeued.
+CELERY_TASK_ACKS_LATE = True
+# Inference is slow and CPU-bound; do not let one worker hoard queued tasks.
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+# A stuck task must not hold a worker forever.
+CELERY_TASK_TIME_LIMIT = 120
+# True only in tests or local runs without Redis: tasks execute inline on .delay().
+CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", False)
+
+# Inspected frames. web and the celery worker mount the same directory, and tasks
+# receive paths relative to it.
+MEDIA_ROOT = Path(os.environ.get("IMAGE_DIR") or BASE_DIR / "media")
 
 AUTH_USER_MODEL = "accounts.User"
 
