@@ -114,6 +114,15 @@ body {
   border-radius: 6px;
   overflow: hidden;
 }
+
+.image-error {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #fca5a5;
+}
 #viewer { display: block; }
 #viewer.drawing { cursor: crosshair; touch-action: none; }
 .draw-hint { margin: 8px 0 0; font-size: 13px; color: var(--missed); }
