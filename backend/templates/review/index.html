@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Queue · Defect-to-Action{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{% static 'review/review.css' %}">
+{% endblock %}
+
+{% block content %}
+  <header class="topbar">
+    <h1>검수 대기열</h1>
+    <div class="stats">
+      <span>남은 작업 <strong id="stat-pending">0</strong></span>
+      <span>오늘 처리 <strong id="stat-done-today">0</strong></span>
+    </div>
+    <span id="mode-badge" class="mode-badge"></span>
+  </header>
+
+  <main class="layout">
+    <!-- Pending review tasks -->
+    <aside class="panel list-panel">
+      <h2>대기 중</h2>
+      <ul id="task-list" class="task-list"></ul>
+      <p id="empty-message" class="empty" hidden>대기 중인 작업이 없습니다.</p>
+    </aside>
+
+    <!-- Inspection image with candidate defect boxes -->
+    <section class="panel viewer-panel">
+      <div id="viewer-meta" class="viewer-meta"></div>
+      <div class="canvas-wrap">
+        <canvas id="viewer"></canvas>
+        <p id="image-error" class="image-error" role="alert" hidden>
+          이미지를 불러오지 못했습니다.<br>
+          목록에서 이 작업을 다시 누르면 재시도합니다.
+        </p>
+      </div>
+      <p id="draw-hint" class="draw-hint" hidden>드래그로 박스를 그리고 <kbd>Enter</kbd>로 확정 · <kbd>Esc</kbd>로 취소</p>
+    </section>
+
+    <!-- Reviewer decision -->
+    <aside class="panel decision-panel">
+      <label for="reviewer">검수자</label>
+      <input id="reviewer" type="text" placeholder="이름" autocomplete="off">
+      <button id="btn-confirm" class="btn confirm" type="button"><span id="label-confirm">결함 확정</span> <kbd>A</kbd></button>
+      <button id="btn-reject" class="btn reject" type="button"
+              title="후보 결함을 오탐으로 기록합니다 (재학습 후보로 표시)">오탐 반려 <kbd>R</kbd></button>
+      <button id="btn-missed" class="btn missed" type="button"
+              title="모델이 놓친 결함을 직접 박스로 그려 추가합니다">놓친 결함 추가 <kbd>M</kbd></button>
+      <p class="shortcut-help"><kbd>↑</kbd> <kbd>↓</kbd> 목록 이동</p>
+      <div id="notice" class="notice" role="status" hidden></div>
+    </aside>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'review/review.js' %}"></script>
+{% endblock %}
