@@ -1,0 +1,8 @@
+﻿date,member,github,role,category,issue,pr,work,result,evidence,next_step
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,planning,,,"선생님 피드백 반영: FastAPI = AI 추론만, 접수·검수·조치·이력·관리자·인증은 Django + DRF, 스키마는 Django ORM·migration으로 관리",구조 변경 결정 · 전체 구조도 갱신,,핵심 도메인(모델·상태 전이·판정)을 Django로 이전
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,planning,#20 #21,,팀원 주말 작업 지시서 2부 (각 4시간 · PR 2개) · 이슈 2건 등록,팀 공지,PDF 2부 · GitHub Issues #20 #21,
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,planning,#5 #6 #8,,기존 이슈 재정리: #5 보류(Django 접수 API 이후) · #6 실제 API 연결은 도메인 이전 후 · #8 Django 이전 때 구현,팀 공지,,
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,docs,,#19,데이터 카드 docs/dataset.md + 루트 pytest.ini + PR 템플릿(기존 템플릿에 휴대폰 리뷰 항목 추가),merged,main 반영 확인 · 미기입 칸 0 · 드라이브 링크 미포함,
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,data,,,"팀 공유용 데이터 폴더 정리(구글 드라이브): README · 분할표 · 학습 설정 · 분할 검증 리포트 · 매니페스트 16개 업로드, 사진 900장 · 가중치 업로드 진행 중",진행 중,분할 검증 리포트 전부 PASS (기존 산출물) · 가중치 sha256 기록,업로드 완료 후 공유 범위를 팀원 2명으로 제한
+2026-11-20,최용훈,yonghoonchoi88,PM / Integrator,review,#6,#18,팀원 B PR 리뷰 · 승인 · merge,approved · merged,최신 main 93 passed,템플릿 이전은 #21 PR 2에서
+2026-11-20,심준형,simpson92,검수 화면 · 지표,fix,#6,#18,검수 화면 리뷰 반영: 이미지 로드 실패 안내 · 결정 버튼 비활성화 · 작업별 라벨(결함 확정 / OK 판정 맞음) · 감사 샘플 반려 비활성화,merged · #6 open (Refs),합성 이미지 스크린샷 · pytest 통과,Django 템플릿 이전 (#21)
