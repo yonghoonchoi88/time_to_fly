@@ -33,3 +33,27 @@ uvicorn main:app --port 8001   # http://localhost:8001/docs
 | `MOCK_DEFECT_RATE` | `0.3` | Probability that the mock returns a candidate |
 
 The mock engine seeds its RNG from a SHA-256 of the image pixels, so the same image always gets the same result.
+
+## YOLO engine
+```bash
+pip install -r requirements-yolo.txt            # CPU torch + ultralytics
+mkdir -p ../data/models && (cd ../data/models && python -c "from ultralytics import YOLO; YOLO('yolo11n.pt')")
+ENGINE=yolo MODEL_WEIGHTS=../data/models/yolo11n.pt MODEL_NAME=yolo11n MODEL_VERSION=yolo11n IMGSZ=640 uvicorn main:app --port 8001
+```
+The server refuses to start if the weights file is missing (no ultralytics auto-download). `/model` exposes `weights_sha256` of the weights actually being served.
+
+## Docker
+```bash
+docker build -t ai-server ai-server                              # mock only
+docker build --build-arg WITH_YOLO=1 -t ai-server ai-server      # with YOLO
+docker run --rm -p 8001:8001 -e ENGINE=yolo -e MODEL_WEIGHTS=/models/yolo11n.pt \
+  -e MODEL_NAME=yolo11n -e MODEL_VERSION=yolo11n -e IMGSZ=640 -v $PWD/data/models:/models:ro ai-server
+```
+Weights are mounted, never baked into the image.
+
+## Latency benchmark
+```bash
+python scripts/bench.py --synthetic 30 --size 640x480    # synthetic images
+python scripts/bench.py --images <folder>                 # images in a folder, name order
+```
+Prints p50 / p95 / max of engine time (`latency_ms`) and round trip, image count, CPU and model. The first image is a warm-up and excluded. Always report numbers with the model, images and CPU.
