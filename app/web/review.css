@@ -12,6 +12,7 @@
   --audit-bg: #dbeafe;
   --audit-fg: #1e40af;
   --confirm: #dc2626;
+  --ok-verdict: #16a34a;
   --reject: #4b5563;
   --missed: #7c3aed;
 }
@@ -152,6 +153,7 @@ body {
 }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn.confirm { background: var(--confirm); }
+.btn.confirm.ok-verdict { background: var(--ok-verdict); }
 .btn.reject { background: var(--reject); }
 .btn.missed { background: var(--missed); }
 .btn.missed.active { outline: 3px solid #c4b5fd; outline-offset: 2px; }

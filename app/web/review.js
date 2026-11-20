@@ -239,6 +239,8 @@ function renderDecisionButtons() {
   const label = hasCandidates(task) ? CONFIRM_LABELS.defects : CONFIRM_LABELS.noCandidates;
   els.confirmLabel.textContent = label.text;
   els.confirmButton.title = label.title;
+  // Red reads as "defect"; an OK-verdict confirmation gets its own color.
+  els.confirmButton.classList.toggle("ok-verdict", !hasCandidates(task));
   // Nothing to reject when the engine proposed no candidates.
   if (!hasCandidates(task)) els.rejectButton.disabled = true;
 }
