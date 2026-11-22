@@ -31,9 +31,11 @@
 
 ```bash
 cp .env.example .env
-docker compose up --build
-curl localhost:8000/health
+docker compose up --build -d
+curl localhost:8000/api/health/
 ```
+
+Django(8000) · Celery 워커 · ai-server(8001) · Redis · PostgreSQL이 함께 뜹니다. 확인 방법과 문제 해결: [docs/runbook.md](docs/runbook.md)
 
 테스트:
 

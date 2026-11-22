@@ -9,8 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-# Static files are collected into the image; serving them is left to the
-# compose setup (reverse proxy or a static-file middleware).
+# Static files are collected into the image and served by WhiteNoise under gunicorn.
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
