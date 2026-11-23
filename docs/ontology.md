@@ -11,11 +11,11 @@
 | `ProductionLine` | 생산 라인 | name, site |
 | `Lot` | 생산 묶음 (김치: 촬영 세션 1개 = Lot 1개) | code, product_type, status |
 | `ModelVersion` | 검사 엔진 + 판정 기준값 | name, engine, weights_sha256, auto_ng_conf, review_conf |
-| `Inspection` | 이미지 1장에 대한 검사 1회 | image_uri, image_width/height, captured_at, source(live/replay), verdict, latency_ms, is_audit_sample |
+| `Inspection` | 이미지 1장에 대한 검사 1회 | image_path, status(queued/done/failed), captured_at, received_at, completed_at, source(live/replay), verdict, image_width/height, engine_latency_ms, is_audit_sample, failure_reason |
 | `Defect` | 결함 후보 1개 | defect_type, confidence, bbox, origin(model/human), status |
 | `ReviewTask` | 사람이 확인해야 할 일 | reason(low_confidence/audit_sample), status, reviewer, decided_at |
 | `Action` | 현장 조치 | action_type, status, owner, opened_at, closed_at, note |
-| `Event` | 모든 상태 변화 기록 (감사 로그) | object_type, object_id, event, actor, at, payload |
+| `Event` | 모든 상태 변화 기록 (감사 로그, 수정·삭제 불가) | lot, object_type, object_id, event, actor, at, payload |
 
 ## 2. 관계 (Link types)
 
@@ -55,7 +55,14 @@ ProductionLine 1 ──< Lot 1 ──< Inspection 1 ──< Defect
 - 자동 NG는 `confirmed`로 생성 (actor = `system`)
 
 **ReviewTask.status**
-- `pending → done` (decision: `confirm` / `reject` / `add_missed` — 감사 샘플에서 놓친 결함을 사람이 추가)
+- `pending → done` (decision: `confirm` / `reject` / `add_missed`)
+- 결정의 의미는 대기열에 들어온 이유에 따라 다르다.
+
+| decision | low_confidence (모델이 애매했던 경우) | audit_sample (OK 판정 무작위 재확인) |
+|---|---|---|
+| `confirm` | 후보 → confirmed | **OK 판정이 맞음**: 기준 미만 후보 → rejected, 재학습 표시 안 함 |
+| `reject` | 후보 → rejected, 재학습 표시 | 허용 안 함 (반려할 경보가 없음) |
+| `add_missed` | 사람 결함 추가(confirmed), 후보 → rejected + 재학습 표시 | 같음. 이 건수가 "감사로 되찾은 놓침" 지표 |
 
 **Action.status**
 - `open → in_progress → done`, `open/in_progress → cancelled`
@@ -66,7 +73,7 @@ ProductionLine 1 ──< Lot 1 ──< Inspection 1 ──< Defect
 - `on_hold → scrapped` : 폐기 (v0.1에서는 API 미제공)
 - 조치를 취소해도 Lot 상태는 되돌리지 않는다. 보류 해제는 `release_lot`으로만.
 
-`app/domain/transitions.py`가 이 표의 코드 버전이다. 표에 없는 전이는 `InvalidTransition`으로 거부한다.
+`backend/apps/inspection/domain/transitions.py`가 이 표의 코드 버전이다. 표에 없는 전이는 `InvalidTransition`으로 거부한다.
 
 ## 5. 지표 (Event에서 계산)
 

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.core",
     "apps.ai_gateway",
+    "apps.inspection",
 ]
 
 MIDDLEWARE = [
@@ -112,6 +113,9 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_TIME_LIMIT = 120
 # True only in tests or local runs without Redis: tasks execute inline on .delay().
 CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", False)
+
+# Lots seen for the first time are created on this line.
+DEFAULT_LINE = os.environ.get("DEFAULT_LINE", "line-1")
 
 # Inspected frames. web and the celery worker mount the same directory, and tasks
 # receive paths relative to it.
